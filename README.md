@@ -1,5 +1,3 @@
-Here's a README.md for the repository containing LLM client tests:
-
 # LLM Client Testing Repository
 
 ## Overview
