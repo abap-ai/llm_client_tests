@@ -9,10 +9,10 @@ CLASS zcl_llm_tests_ollama DEFINITION
   PROTECTED SECTION.
   PRIVATE SECTION.
     METHODS:
-      so_complex IMPORTING out TYPE REF TO if_oo_adt_intrnl_classrun,
-      simple_call IMPORTING out TYPE REF TO if_oo_adt_intrnl_classrun,
-      so_simple IMPORTING out TYPE REF TO if_oo_adt_intrnl_classrun,
-      multi_call IMPORTING out TYPE REF TO if_oo_adt_intrnl_classrun.
+      so_complex IMPORTING out TYPE REF TO if_oo_adt_classrun_out,
+      simple_call IMPORTING out TYPE REF TO if_oo_adt_classrun_out,
+      so_simple IMPORTING out TYPE REF TO if_oo_adt_classrun_out,
+      multi_call IMPORTING out TYPE REF TO if_oo_adt_classrun_out.
 ENDCLASS.
 
 
