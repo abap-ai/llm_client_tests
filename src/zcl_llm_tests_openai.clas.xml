@@ -5,7 +5,7 @@
    <VSEOCLASS>
     <CLSNAME>ZCL_LLM_TESTS_OPENAI</CLSNAME>
     <LANGU>E</LANGU>
-    <DESCRIPT>Test ollama models (live test)</DESCRIPT>
+    <DESCRIPT>Test OpenAI models (live test)</DESCRIPT>
     <STATE>1</STATE>
     <CLSCCINCL>X</CLSCCINCL>
     <FIXPT>X</FIXPT>
