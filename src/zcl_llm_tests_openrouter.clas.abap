@@ -1,3 +1,4 @@
+"! <p class="shorttext synchronized" lang="en">Test OpenRouter models (live test)</p>
 CLASS zcl_llm_tests_openrouter DEFINITION
   PUBLIC
   FINAL
@@ -8,11 +9,12 @@ CLASS zcl_llm_tests_openrouter DEFINITION
 
   PROTECTED SECTION.
   PRIVATE SECTION.
+    DATA output TYPE string_table.
     METHODS:
-      so_complex IMPORTING out TYPE REF TO if_oo_adt_classrun_out,
-      simple_call IMPORTING out TYPE REF TO if_oo_adt_classrun_out,
-      so_simple IMPORTING out TYPE REF TO if_oo_adt_classrun_out,
-      multi_call IMPORTING out TYPE REF TO if_oo_adt_classrun_out.
+      so_complex,
+      simple_call,
+      so_simple,
+      multi_call.
 ENDCLASS.
 
 
@@ -31,22 +33,27 @@ CLASS zcl_llm_tests_openrouter IMPLEMENTATION.
     DATA(response) = client->chat( request = request ).
 
     IF response-success = abap_false.
-      out->write( |Error: return code { response-error-http_code } message { response-error-error_text }| ).
+      APPEND |Error: return code { response-error-http_code } message { response-error-error_text }| TO output.
       RETURN.
     ENDIF.
-    out->write( |Simple call result with { response-usage-prompt_tokens } input tokens and { response-usage-completion_tokens } output tokens.| ).
+    APPEND |Simple call result with { response-usage-prompt_tokens } input tokens and { response-usage-completion_tokens } output tokens.| TO output.
     LOOP AT response-choices INTO DATA(choice).
-      out->write( choice-message-content ).
+      APPEND choice-message-content TO output.
     ENDLOOP.
-
-
   ENDMETHOD.
 
   METHOD if_oo_adt_classrun~main.
-    simple_call( out ).
-    so_simple( out ).
-    so_complex( out ).
-    multi_call( out ).
+    "The following methods append the output to the output table. Due to compatibility issues
+    "over different releases passing around the out reference is an issue therefore we use this
+    "workaround.
+    simple_call( ).
+    so_simple( ).
+    so_complex( ).
+    multi_call( ).
+
+    LOOP AT output ASSIGNING FIELD-SYMBOL(<line>).
+      out->write( <line> ).
+    ENDLOOP.
   ENDMETHOD.
 
   METHOD so_simple.
@@ -86,19 +93,18 @@ CLASS zcl_llm_tests_openrouter IMPLEMENTATION.
     DATA(response) = client->chat( request = request ).
 
     IF response-success = abap_false.
-      out->write( |Error: return code { response-error-http_code } message { response-error-error_text }| ).
+      APPEND |Error: return code { response-error-http_code } message { response-error-error_text }| TO output.
       RETURN.
     ENDIF.
     FIELD-SYMBOLS <dogs> TYPE any.
     ASSIGN response-structured_output->* TO <dogs>.
     so = <dogs>.
 
-    out->write( |Structured Output call result with { response-usage-prompt_tokens } input tokens and { response-usage-completion_tokens } output tokens.| ).
+    APPEND |Structured Output call result with { response-usage-prompt_tokens } input tokens and { response-usage-completion_tokens } output tokens.| TO output.
 
     LOOP AT so-dogs ASSIGNING FIELD-SYMBOL(<dog>).
-      out->write( |Breed: { <dog>-breed } Avg Age: { <dog>-avg_age } Avg Height: { <dog>-avg_height_cm } Size Category { <dog>-size_category }|  ).
+      APPEND |Breed: { <dog>-breed } Avg Age: { <dog>-avg_age } Avg Height: { <dog>-avg_height_cm } Size Category { <dog>-size_category }| TO output.
     ENDLOOP.
-
   ENDMETHOD.
 
   METHOD so_complex.
@@ -142,19 +148,18 @@ CLASS zcl_llm_tests_openrouter IMPLEMENTATION.
     DATA(response) = client->chat( request = request ).
 
     IF response-success = abap_false.
-      out->write( |Error: return code { response-error-http_code } message { response-error-error_text }| ).
+      APPEND |Error: return code { response-error-http_code } message { response-error-error_text }| TO output.
       RETURN.
     ENDIF.
     FIELD-SYMBOLS <dog> TYPE any.
     ASSIGN response-structured_output->* TO <dog>.
     dog = <dog>.
-    out->write( |Complex Structured Output result with { response-usage-prompt_tokens } input tokens and { response-usage-completion_tokens } output tokens.| ).
-    out->write( |Recommended breed: { dog-recommended_breed }| ).
-    out->write( |Reason: { dog-reason }| ).
+    APPEND |Complex Structured Output result with { response-usage-prompt_tokens } input tokens and { response-usage-completion_tokens } output tokens.| TO output.
+    APPEND |Recommended breed: { dog-recommended_breed }| TO output.
+    APPEND |Reason: { dog-reason }| TO output.
     LOOP AT dog-alternatives INTO DATA(alt).
-      out->write( |Alternative breed: { alt-breed }\nAdvantages: { alt-advantages }\nDisadvantages: { alt-disadvantages }\nDecision: { alt-decision }| ).
+      APPEND |Alternative breed: { alt-breed }\nAdvantages: { alt-advantages }\nDisadvantages: { alt-disadvantages }\nDecision: { alt-decision }| TO output.
     ENDLOOP.
-
   ENDMETHOD.
 
   METHOD multi_call.
@@ -169,13 +174,13 @@ CLASS zcl_llm_tests_openrouter IMPLEMENTATION.
 
     DATA(response) = client->chat( request = request ).
     IF response-success = abap_false.
-      out->write( |Error: return code { response-error-http_code } message { response-error-error_text }| ).
+      APPEND |Error: return code { response-error-http_code } message { response-error-error_text }| TO output.
       RETURN.
     ENDIF.
-    out->write( |First call with { response-usage-prompt_tokens } input tokens and { response-usage-completion_tokens } output tokens.| ).
-    out->write( `Response of first call to llm: ` ).
+    APPEND |First call with { response-usage-prompt_tokens } input tokens and { response-usage-completion_tokens } output tokens.| TO output.
+    APPEND `Response of first call to llm: ` TO output.
     LOOP AT response-choices INTO DATA(choice).
-      out->write( choice-message-content ).
+      APPEND choice-message-content TO output.
     ENDLOOP.
 
     "Switching to a different model taking over all history
@@ -187,16 +192,14 @@ CLASS zcl_llm_tests_openrouter IMPLEMENTATION.
         content = |Now implement this in ABAP considering abap clean code principles. Avoid variable prefixes like lv_ and iv_.| ) TO haiku_request-messages.
     response = haiku_clnt->chat( request = haiku_request ).
     IF response-success = abap_false.
-      out->write( |Error: return code { response-error-http_code } message { response-error-error_text }| ).
+      APPEND |Error: return code { response-error-http_code } message { response-error-error_text }| TO output.
       RETURN.
     ENDIF.
-    out->write( |Second Call with { response-usage-prompt_tokens } input tokens and { response-usage-completion_tokens } output tokens.| ).
-    out->write( `Response of second call to llm: ` ).
+    APPEND |Second Call with { response-usage-prompt_tokens } input tokens and { response-usage-completion_tokens } output tokens.| TO output.
+    APPEND `Response of second call to llm: ` TO output.
     LOOP AT response-choices INTO choice.
-      out->write( choice-message-content ).
+      APPEND choice-message-content TO output.
     ENDLOOP.
-
-
   ENDMETHOD.
 
 ENDCLASS.
