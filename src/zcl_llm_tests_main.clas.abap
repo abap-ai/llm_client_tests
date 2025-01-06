@@ -64,20 +64,20 @@ CLASS zcl_llm_tests_main IMPLEMENTATION.
     TRY.
         DATA(client) = zcl_llm_factory=>get_client( model ).
       CATCH zcx_llm_authorization INTO DATA(error).
-        APPEND |Authorization Error { error->if_message~get_text( ) }| TO result-out.
+        APPEND |Authorization Error { error->if_message~get_text( ) }| TO result-out ##NO_TEXT.
         RETURN.
     ENDTRY.
     DATA(request) = client->new_request( ).
 
-    request->add_message( VALUE #( role = client->role_user content = `What makes the ABAP programming language special?` ) ).
+    request->add_message( VALUE #( role = client->role_user content = `What makes the ABAP programming language special?` ) ) ##NO_TEXT.
 
     DATA(response) = client->chat( request = request ).
 
     IF response-success = abap_false..
-      APPEND |Error: return code { response-error-http_code } message { response-error-error_text }| TO result-out.
+      APPEND |Error: return code { response-error-http_code } message { response-error-error_text }| TO result-out ##NO_TEXT.
       RETURN.
     ENDIF.
-    APPEND |Simple call result-out with { response-usage-prompt_tokens } input tokens and { response-usage-completion_tokens } output tokens.| TO result-out.
+    APPEND |Simple call result-out with { response-usage-prompt_tokens } input tokens and { response-usage-completion_tokens } output tokens.| TO result-out ##NO_TEXT.
     APPEND response-choice-message-content TO result-out.
     result-success = abap_true.
   ENDMETHOD.
@@ -86,7 +86,7 @@ CLASS zcl_llm_tests_main IMPLEMENTATION.
     TRY.
         DATA(client) = zcl_llm_factory=>get_client( model ).
       CATCH zcx_llm_authorization INTO DATA(error).
-        APPEND |Authorization Error { error->if_message~get_text( ) }| TO result-out.
+        APPEND |Authorization Error { error->if_message~get_text( ) }| TO result-out ##NO_TEXT.
         RETURN.
     ENDTRY.
     DATA(request) = client->new_request( ).
@@ -106,13 +106,13 @@ CLASS zcl_llm_tests_main IMPLEMENTATION.
       ( fieldname = 'breed' description = 'Name of breed' )
       ( fieldname = 'avg_age' description = 'Average age' )
       ( fieldname = 'avg_height_cm' description = 'Average shoulder height in cm' )
-      ( fieldname = 'size_category' description = 'Size Category' enum_values = VALUE #( ( `small` ) ( `medium` ) ( `large` ) ) ) ).
+      ( fieldname = 'size_category' description = 'Size Category' enum_values = VALUE #( ( `small` ) ( `medium` ) ( `large` ) ) ) ) ##NO_TEXT.
 
     request->add_message( VALUE #( role = client->role_user
         content = |Create a list of dog breeds with name, average max age, average shoulder height and categorize them into small, medium and large.|
-               && | Return at least 10 breeds.| ) ).
+               && | Return at least 10 breeds.| ) ) ##NO_TEXT.
 
-    request->set_structured_output( data = so descriptions = descriptions ).
+    request->set_structured_output( data_desc = cast #( cl_abap_datadescr=>describe_by_data( so ) ) descriptions = descriptions ).
 
     " A low temperature often helps with structured output
     request->options( )->set_temperature( '0.1' ).
@@ -120,20 +120,20 @@ CLASS zcl_llm_tests_main IMPLEMENTATION.
     DATA(response) = client->chat( request = request ).
 
     IF response-success = abap_false.
-      APPEND |Error: return code { response-error-http_code } message { response-error-error_text }| TO result-out.
+      APPEND |Error: return code { response-error-http_code } message { response-error-error_text }| TO result-out ##NO_TEXT.
       RETURN.
     ENDIF.
     FIELD-SYMBOLS <dogs> TYPE any.
     ASSIGN response-choice-structured_output->* TO <dogs>.
     so = <dogs>.
 
-    APPEND |Structured Output call result-out with { response-usage-prompt_tokens } input tokens and { response-usage-completion_tokens } output tokens.| TO result-out.
+    APPEND |Structured Output call result-out with { response-usage-prompt_tokens } input tokens and { response-usage-completion_tokens } output tokens.| TO result-out ##NO_TEXT.
 
     LOOP AT so-dogs ASSIGNING FIELD-SYMBOL(<dog>).
-      APPEND |Breed: { <dog>-breed } Avg Age: { <dog>-avg_age } Avg Height: { <dog>-avg_height_cm } Size Category { <dog>-size_category }| TO result-out.
+      APPEND |Breed: { <dog>-breed } Avg Age: { <dog>-avg_age } Avg Height: { <dog>-avg_height_cm } Size Category { <dog>-size_category }| TO result-out ##NO_TEXT.
     ENDLOOP.
     IF sy-subrc <> 0.
-      APPEND |No output result| TO result-out.
+      APPEND |No output result| TO result-out ##NO_TEXT.
       RETURN.
     ENDIF.
     result-success = abap_true.
@@ -143,7 +143,7 @@ CLASS zcl_llm_tests_main IMPLEMENTATION.
     TRY.
         DATA(client) = zcl_llm_factory=>get_client( model ).
       CATCH zcx_llm_authorization INTO DATA(error).
-        APPEND |Authorization Error { error->if_message~get_text( ) }| TO result-out.
+        APPEND |Authorization Error { error->if_message~get_text( ) }| TO result-out ##NO_TEXT.
         RETURN.
     ENDTRY.
     DATA(request) = client->new_request( ).
@@ -168,12 +168,12 @@ CLASS zcl_llm_tests_main IMPLEMENTATION.
           ( fieldname = 'alternatives-breed' description = 'Breed name' )
           ( fieldname = 'alternatives-advantages' description = 'Advantages of this breed' )
           ( fieldname = 'alternatives-disadvantages' description = 'Disadvantages of this breed' )
-          ( fieldname = 'alternatives-decision' description = 'Why this is was not your main choice' ) ).
+          ( fieldname = 'alternatives-decision' description = 'Why this is was not your main choice' ) ) ##NO_TEXT.
 
     request->add_message( VALUE #( role = client->role_user
         content = |Recommend a family friendly dog breed medium or large size and overall friendly but sportive character.|
-               && | Also list alternative breends to consider with advantages, disadvantages and why you didn't choose this one.| ) ).
-    request->set_structured_output( data = dog descriptions = descriptions ).
+               && | Also list alternative breends to consider with advantages, disadvantages and why you didn't choose this one.| ) ) ##NO_TEXT.
+    request->set_structured_output( data_desc = cast #( cl_abap_datadescr=>describe_by_data( dog ) ) descriptions = descriptions ).
 
     " A low temperature often helps with structured output
     request->options( )->set_temperature( '0.1' ).
@@ -181,21 +181,21 @@ CLASS zcl_llm_tests_main IMPLEMENTATION.
     DATA(response) = client->chat( request = request ).
 
     IF response-success = abap_false.
-      APPEND |Error: return code { response-error-http_code } message { response-error-error_text }| TO result-out.
+      APPEND |Error: return code { response-error-http_code } message { response-error-error_text }| TO result-out ##NO_TEXT.
       RETURN.
     ENDIF.
     FIELD-SYMBOLS <dog> TYPE any.
     ASSIGN response-choice-structured_output->* TO <dog>.
     dog = <dog>.
-    APPEND |Complex Structured Output result-out with { response-usage-prompt_tokens } input tokens and { response-usage-completion_tokens } output tokens.| TO result-out.
-    APPEND |Recommended breed: { dog-recommended_breed }| TO result-out.
-    APPEND |Reason: { dog-reason }| TO result-out.
+    APPEND |Complex Structured Output result-out with { response-usage-prompt_tokens } input tokens and { response-usage-completion_tokens } output tokens.| TO result-out ##NO_TEXT.
+    APPEND |Recommended breed: { dog-recommended_breed }| TO result-out ##NO_TEXT.
+    APPEND |Reason: { dog-reason }| TO result-out ##NO_TEXT.
     LOOP AT dog-alternatives INTO DATA(alt).
-      APPEND |Alternative breed: { alt-breed }\nAdvantages: { alt-advantages }\nDisadvantages: { alt-disadvantages }\nDecision: { alt-decision }| TO result-out.
+      APPEND |Alternative breed: { alt-breed }\nAdvantages: { alt-advantages }\nDisadvantages: { alt-disadvantages }\nDecision: { alt-decision }| TO result-out ##NO_TEXT.
     ENDLOOP.
 
     IF sy-subrc <> 0.
-      APPEND |No output result| TO result-out.
+      APPEND |No output result| TO result-out ##NO_TEXT.
       RETURN.
     ENDIF.
 
@@ -206,29 +206,29 @@ CLASS zcl_llm_tests_main IMPLEMENTATION.
     TRY.
         DATA(client) = zcl_llm_factory=>get_client( model_plan ).
       CATCH zcx_llm_authorization INTO DATA(error).
-        APPEND |Authorization Error { error->if_message~get_text( ) }| TO result-out.
+        APPEND |Authorization Error { error->if_message~get_text( ) }| TO result-out ##NO_TEXT.
         RETURN.
     ENDTRY.
     DATA(request) = client->new_request( ).
 
     request->add_message( VALUE #( role = client->role_user
         content = |Write a short technical concept on how to develop a class to convert from snake case to camel case. |
-        && |Do not write any code. Just outline main characteristics and points to consider. | ) ).
+        && |Do not write any code. Just outline main characteristics and points to consider. | ) ) ##NO_TEXT.
 
     DATA(response) = client->chat( request = request ).
     IF response-success = abap_false.
-      APPEND |Error: return code { response-error-http_code } message { response-error-error_text }| TO result-out.
+      APPEND |Error: return code { response-error-http_code } message { response-error-error_text }| TO result-out ##NO_TEXT.
       RETURN.
     ENDIF.
-    APPEND |First call with { response-usage-prompt_tokens } input tokens and { response-usage-completion_tokens } output tokens.| TO result-out.
-    APPEND `Response of first call to llm: ` TO result-out.
+    APPEND |First call with { response-usage-prompt_tokens } input tokens and { response-usage-completion_tokens } output tokens.| TO result-out ##NO_TEXT.
+    APPEND `Response of first call to llm: ` TO result-out ##NO_TEXT.
     APPEND response-choice-message-content TO result-out.
 
     "Switching to a different model taking over all history
     TRY.
         DATA(o1_clnt) = zcl_llm_factory=>get_client( model_code  ).
       CATCH zcx_llm_authorization INTO error.
-        APPEND |Authorization Error { error->if_message~get_text( ) }| TO result-out.
+        APPEND |Authorization Error { error->if_message~get_text( ) }| TO result-out ##NO_TEXT.
         RETURN.
     ENDTRY.
     DATA(qwen_request) = o1_clnt->new_request( ).
@@ -241,15 +241,15 @@ CLASS zcl_llm_tests_main IMPLEMENTATION.
 
     " Add a single message
     qwen_request->add_message( VALUE #( role = client->role_user
-        content = |Now implement this in ABAP considering abap clean code principles. Avoid variable prefixes like lv_ and iv_.| ) ).
+        content = |Now implement this in ABAP considering abap clean code principles. Avoid variable prefixes like lv_ and iv_.| ) ) ##NO_TEXT.
 
     response = o1_clnt->chat( request = qwen_request ).
     IF response-success = abap_false.
-      APPEND |Error: return code { response-error-http_code } message { response-error-error_text }| TO result-out.
+      APPEND |Error: return code { response-error-http_code } message { response-error-error_text }| TO result-out ##NO_TEXT.
       RETURN.
     ENDIF.
-    APPEND |Second Call with { response-usage-prompt_tokens } input tokens and { response-usage-completion_tokens } output tokens.| TO result-out.
-    APPEND `Response of second call to llm: ` TO result-out.
+    APPEND |Second Call with { response-usage-prompt_tokens } input tokens and { response-usage-completion_tokens } output tokens.| TO result-out ##NO_TEXT.
+    APPEND `Response of second call to llm: ` TO result-out ##NO_TEXT.
     APPEND response-choice-message-content TO result-out.
     result-success = abap_true.
   ENDMETHOD.
@@ -258,12 +258,12 @@ CLASS zcl_llm_tests_main IMPLEMENTATION.
     TRY.
         DATA(client) = zcl_llm_factory=>get_client( model ).
       CATCH zcx_llm_authorization INTO DATA(error).
-        APPEND |Authorization Error { error->if_message~get_text( ) }| TO result-out.
+        APPEND |Authorization Error { error->if_message~get_text( ) }| TO result-out ##NO_TEXT.
         RETURN.
     ENDTRY.
     DATA(request) = client->new_request( ).
 
-    request->add_message( VALUE #( role = client->role_user content = `How is the weather in Stuttgart?` ) ).
+    request->add_message( VALUE #( role = client->role_user content = `How is the weather in Stuttgart?` ) ) ##NO_TEXT.
 
     " Low temperature is also recommended for tool calls
     request->options( )->set_temperature( '0.1' ).
@@ -274,12 +274,11 @@ CLASS zcl_llm_tests_main IMPLEMENTATION.
 
     "Use the echo tool (usually use a fully implemented tool, this is for testing)
     DATA tool_details TYPE zif_llm_tool=>tool_details.
-    tool_details-name = `get_weather_for_city`.
-    tool_details-description = `Get real-time weather information for a specific city. One City per call only`.
+    tool_details-name = `get_weather_for_city` ##NO_TEXT.
+    tool_details-description = `Get real-time weather information for a specific city. One City per call only` ##NO_TEXT.
     tool_details-type = zif_llm_tool=>type_function.
-    tool_details-parameters-data = REF #( tool_data ).
     tool_details-parameters-data_desc ?= cl_abap_typedescr=>describe_by_data( tool_data ).
-    tool_details-parameters-descriptions = VALUE #( ( fieldname = `city` description = `City to get the weather for`) ).
+    tool_details-parameters-descriptions = VALUE #( ( fieldname = `city` description = `City to get the weather for`) ) ##NO_TEXT.
 
     DATA(echo_tool) = NEW zcl_llm_tool_echo( tool_details = tool_details ).
 
@@ -289,16 +288,16 @@ CLASS zcl_llm_tests_main IMPLEMENTATION.
 
     IF response-success = abap_false.
       IF response-error-tool_parse_error = abap_true.
-        APPEND |Tool call error: { response-error-error_text }| TO result-out.
+        APPEND |Tool call error: { response-error-error_text }| TO result-out ##NO_TEXT.
         RETURN.
       ENDIF.
-      APPEND |Error: return code { response-error-http_code } message { response-error-error_text }| TO result-out.
+      APPEND |Error: return code { response-error-http_code } message { response-error-error_text }| TO result-out ##NO_TEXT.
       RETURN.
     ENDIF.
-    APPEND |Tool call result-out with { response-usage-prompt_tokens } input tokens and { response-usage-completion_tokens } output tokens.| TO result-out.
+    APPEND |Tool call result-out with { response-usage-prompt_tokens } input tokens and { response-usage-completion_tokens } output tokens.| TO result-out ##NO_TEXT.
 
     IF lines( response-choice-tool_calls ) <> 1.
-      APPEND `Incorrect number or tool calls - stopping!` TO result-out.
+      APPEND `Incorrect number or tool calls - stopping!` TO result-out ##NO_TEXT.
       RETURN.
     ENDIF.
 
@@ -306,7 +305,7 @@ CLASS zcl_llm_tests_main IMPLEMENTATION.
     READ TABLE response-choice-tool_calls ASSIGNING FIELD-SYMBOL(<tool>) INDEX 1.
     ASSIGN <tool>-function-arguments->* TO FIELD-SYMBOL(<tool_data>).
     tool_data = <tool_data>.
-    APPEND |Tool call for { <tool>-function-name } with City { tool_data-city }| TO result-out.
+    APPEND |Tool call for { <tool>-function-name } with City { tool_data-city }| TO result-out ##NO_TEXT.
 
     "Append the tool call to the llm messages
     request->add_tool_choices( VALUE #( ( <tool> ) ) ).
@@ -326,7 +325,7 @@ CLASS zcl_llm_tests_main IMPLEMENTATION.
             ( day = `Monday` min_temp_c = 8 max_temp_c = 20 rain_percent = 10  )
             ( day = `Tuesday` min_temp_c = 6 max_temp_c = 16 rain_percent = 60  )
             ( day = `Wednesday` min_temp_c = 9 max_temp_c = 24 rain_percent = 0  )
-            ) ).
+            ) ) ##NO_TEXT.
 
     echo_tool->set_response( data = forecast name = tool_details-name tool_call_id = <tool>-id ).
 
@@ -340,13 +339,13 @@ CLASS zcl_llm_tests_main IMPLEMENTATION.
 
     IF response-success = abap_false.
       IF response-error-tool_parse_error = abap_true.
-        APPEND |Tool call error: { response-error-error_text }| TO result-out.
+        APPEND |Tool call error: { response-error-error_text }| TO result-out ##NO_TEXT.
         RETURN.
       ENDIF.
-      APPEND |Error: return code { response-error-http_code } message { response-error-error_text }| TO result-out.
+      APPEND |Error: return code { response-error-http_code } message { response-error-error_text }| TO result-out ##NO_TEXT.
       RETURN.
     ENDIF.
-    APPEND |Call with tool response with { response-usage-prompt_tokens } input tokens and { response-usage-completion_tokens } output tokens.| TO result-out.
+    APPEND |Call with tool response with { response-usage-prompt_tokens } input tokens and { response-usage-completion_tokens } output tokens.| TO result-out ##NO_TEXT.
     APPEND response-choice-message-content TO result-out.
     result-success = abap_true.
   ENDMETHOD.
