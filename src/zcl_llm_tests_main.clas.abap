@@ -44,7 +44,7 @@ CLASS zcl_llm_tests_main DEFINITION
         RETURNING VALUE(result) TYPE response,
       "! <p class="shorttext synchronized" lang="en"></p>
       "! Function (Tool) Call Example using the ECHO tool that allows
-      "! tool calls without any implementation
+      "! Tool calls using the echo class for tool use without any real tool implementation
       "! @parameter model | <p class="shorttext synchronized" lang="en"></p>
       "! @parameter result | <p class="shorttext synchronized" lang="en"></p>
       func_call_echo
@@ -112,7 +112,7 @@ CLASS zcl_llm_tests_main IMPLEMENTATION.
         content = |Create a list of dog breeds with name, average max age, average shoulder height and categorize them into small, medium and large.|
                && | Return at least 10 breeds.| ) ) ##NO_TEXT.
 
-    request->set_structured_output( data_desc = cast #( cl_abap_datadescr=>describe_by_data( so ) ) descriptions = descriptions ).
+    request->set_structured_output( data_desc = CAST #( cl_abap_datadescr=>describe_by_data( so ) ) descriptions = descriptions ).
 
     " A low temperature often helps with structured output
     request->options( )->set_temperature( '0.1' ).
@@ -173,7 +173,7 @@ CLASS zcl_llm_tests_main IMPLEMENTATION.
     request->add_message( VALUE #( role = client->role_user
         content = |Recommend a family friendly dog breed medium or large size and overall friendly but sportive character.|
                && | Also list alternative breends to consider with advantages, disadvantages and why you didn't choose this one.| ) ) ##NO_TEXT.
-    request->set_structured_output( data_desc = cast #( cl_abap_datadescr=>describe_by_data( dog ) ) descriptions = descriptions ).
+    request->set_structured_output( data_desc = CAST #( cl_abap_datadescr=>describe_by_data( dog ) ) descriptions = descriptions ).
 
     " A low temperature often helps with structured output
     request->options( )->set_temperature( '0.1' ).
@@ -327,7 +327,7 @@ CLASS zcl_llm_tests_main IMPLEMENTATION.
             ( day = `Wednesday` min_temp_c = 9 max_temp_c = 24 rain_percent = 0  )
             ) ) ##NO_TEXT.
 
-    echo_tool->set_response( data = forecast name = tool_details-name tool_call_id = <tool>-id ).
+    echo_tool->execute( data = REF #( forecast ) tool_call_id = <tool>-id ).
 
     "Append the tool result-out and call the LLM again to get the response
     request->add_tool_result( echo_tool ).
