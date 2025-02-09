@@ -23,6 +23,13 @@ CLASS zcl_llm_tests_ollama IMPLEMENTATION.
     ENDIF.
     out->write( response-out ).
 
+    response = zcl_llm_tests_main=>custom_system_message( 'llama3.2').
+    IF response-success = abap_false.
+      out->write( response-out ).
+      RETURN.
+    ENDIF.
+    out->write( response-out ).
+
     response = zcl_llm_tests_main=>so_simple( 'llama3.2').
     IF response-success = abap_false.
       out->write( response-out ).

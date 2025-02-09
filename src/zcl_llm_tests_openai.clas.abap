@@ -13,9 +13,15 @@ ENDCLASS.
 
 
 CLASS zcl_llm_tests_openai IMPLEMENTATION.
-
   METHOD if_oo_adt_classrun~main.
     DATA(response) = zcl_llm_tests_main=>simple_call( 'gpt-4o-mini' ).
+    IF response-success = abap_false.
+      out->write( response-out ).
+      RETURN.
+    ENDIF.
+    out->write( response-out ).
+
+    response = zcl_llm_tests_main=>custom_system_message( 'gpt-4o-mini' ).
     IF response-success = abap_false.
       out->write( response-out ).
       RETURN.
@@ -36,7 +42,8 @@ CLASS zcl_llm_tests_openai IMPLEMENTATION.
     ENDIF.
     out->write( response-out ).
 
-    response = zcl_llm_tests_main=>multi_call( model_plan = 'o1-mini' model_code = 'gpt-4o-mini' ).
+    response = zcl_llm_tests_main=>multi_call( model_plan = 'o1-mini'
+                                               model_code = 'gpt-4o-mini' ).
     IF response-success = abap_false.
       out->write( response-out ).
       RETURN.

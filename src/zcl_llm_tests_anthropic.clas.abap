@@ -22,6 +22,13 @@ CLASS zcl_llm_tests_anthropic IMPLEMENTATION.
     ENDIF.
     out->write( response-out ).
 
+    response = zcl_llm_tests_main=>custom_system_message( 'an-haiku-3.5' ).
+    IF response-success = abap_false.
+      out->write( response-out ).
+      RETURN.
+    ENDIF.
+    out->write( response-out ).
+
     " Currently no structured output support, might simulate this via tool call later
 *    response = zcl_llm_tests_main=>so_simple( 'an-haiku-3.5' ).
 *    IF response-success = abap_false.
