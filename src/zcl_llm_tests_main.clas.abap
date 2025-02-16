@@ -263,7 +263,7 @@ CLASS zcl_llm_tests_main IMPLEMENTATION.
             role    = client->role_user
             content = |Now implement this in ABAP considering abap clean code principles. Avoid variable prefixes like lv_ and iv_.| ) ) ##NO_TEXT.
 
-    response = o1_clnt->chat( request = qwen_request ).
+    response = o1_clnt->chat( qwen_request ).
     IF response-success = abap_false.
       APPEND |Error: return code { response-error-http_code } message { response-error-error_text }| TO result-out ##NO_TEXT.
       RETURN.
@@ -356,7 +356,7 @@ CLASS zcl_llm_tests_main IMPLEMENTATION.
     request->set_tool_choice( zif_llm_chat_request=>tool_choice_none ).
 
     " Execute and evaluate next call
-    response = client->chat( request = request ).
+    response = client->chat( request ).
 
     IF response-success = abap_false.
       IF response-error-tool_parse_error = abap_true.
@@ -380,7 +380,7 @@ CLASS zcl_llm_tests_main IMPLEMENTATION.
     ENDTRY.
     DATA(request) = client->new_request( ).
     request->add_message( VALUE #( role    = client->role_system
-                                   content = `You are a story telling pirate.` ) ).
+                                   content = `You are a story telling pirate.` ) ) ##NO_TEXT.
     request->add_message( VALUE #( role    = client->role_user
                                    content = `I see land!` ) ) ##NO_TEXT.
 

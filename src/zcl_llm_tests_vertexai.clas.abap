@@ -50,7 +50,9 @@ CLASS zcl_llm_tests_vertexai IMPLEMENTATION.
       RETURN.
     ENDIF.
     out->write( response-out ).
-    "
+
+    " got a few 429 errors due to calling too fast
+    WAIT UP TO 5 SECONDS.
     response = zcl_llm_tests_main=>func_call_echo( 'gv-gemini-1.5-flash' ).
     IF response-success = abap_false.
       out->write( response-out ).
