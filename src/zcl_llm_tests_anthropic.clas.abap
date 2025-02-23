@@ -45,6 +45,13 @@ CLASS zcl_llm_tests_anthropic IMPLEMENTATION.
       RETURN.
     ENDIF.
     out->write( response-out ).
+
+    response = zcl_llm_tests_main=>execute_tool( 'an-haiku-3.5' ).
+    IF response-success = abap_false.
+      out->write( response-out ).
+      RETURN.
+    ENDIF.
+    out->write( response-out ).
   ENDMETHOD.
 
 ENDCLASS.

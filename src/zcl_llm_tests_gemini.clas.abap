@@ -7,9 +7,7 @@ CLASS zcl_llm_tests_gemini DEFINITION
     INTERFACES if_oo_adt_classrun.
 
   PROTECTED SECTION.
-  PRIVATE SECTION.
 ENDCLASS.
-
 
 
 CLASS zcl_llm_tests_gemini IMPLEMENTATION.
@@ -51,6 +49,13 @@ CLASS zcl_llm_tests_gemini IMPLEMENTATION.
     out->write( response-out ).
 
     response = zcl_llm_tests_main=>func_call_echo( 'ge-gemini-2.0-flash' ).
+    IF response-success = abap_false.
+      out->write( response-out ).
+      RETURN.
+    ENDIF.
+    out->write( response-out ).
+
+    response = zcl_llm_tests_main=>execute_tool( 'ge-gemini-2.0-flash' ).
     IF response-success = abap_false.
       out->write( response-out ).
       RETURN.

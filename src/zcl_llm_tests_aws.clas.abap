@@ -43,6 +43,13 @@ CLASS zcl_llm_tests_aws IMPLEMENTATION.
       RETURN.
     ENDIF.
     out->write( response-out ).
+
+    response = zcl_llm_tests_main=>execute_tool( 'aw-nova-pro' ).
+    IF response-success = abap_false.
+      out->write( response-out ).
+      RETURN.
+    ENDIF.
+    out->write( response-out ).
   ENDMETHOD.
 
 ENDCLASS.

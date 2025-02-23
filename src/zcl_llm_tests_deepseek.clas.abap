@@ -28,7 +28,7 @@ CLASS zcl_llm_tests_deepseek IMPLEMENTATION.
     ENDIF.
     out->write( response-out ).
 
-" Structured Output currently not supported https://github.com/deepseek-ai/DeepSeek-V3/issues/302
+    " Structured Output currently not supported https://github.com/deepseek-ai/DeepSeek-V3/issues/302
     response = zcl_llm_tests_main=>multi_call( model_plan = 'ds-reason'
                                                model_code = 'ds-chat' ).
     IF response-success = abap_false.
@@ -38,6 +38,13 @@ CLASS zcl_llm_tests_deepseek IMPLEMENTATION.
     out->write( response-out ).
 
     response = zcl_llm_tests_main=>func_call_echo( 'ds-chat' ).
+    IF response-success = abap_false.
+      out->write( response-out ).
+      RETURN.
+    ENDIF.
+    out->write( response-out ).
+
+    response = zcl_llm_tests_main=>execute_tool( 'ds-chat' ).
     IF response-success = abap_false.
       out->write( response-out ).
       RETURN.

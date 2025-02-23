@@ -62,6 +62,13 @@ CLASS zcl_llm_tests_main DEFINITION
       IMPORTING model         TYPE zllm_model
       RETURNING VALUE(result) TYPE response.
 
+    "! <p class="shorttext synchronized" lang="en">Use the new execute tools features</p>
+    "!
+    "! @parameter model | <p class="shorttext synchronized" lang="en">LLM Model</p>
+    "! @parameter result | <p class="shorttext synchronized" lang="en">Result</p>
+    CLASS-METHODS execute_tool IMPORTING model         TYPE zllm_model
+                               RETURNING VALUE(result) TYPE response.
+
   PROTECTED SECTION.
   PRIVATE SECTION.
 
@@ -77,12 +84,8 @@ CLASS zcl_llm_tests_main IMPLEMENTATION.
         APPEND |Authorization Error { error->if_message~get_text( ) }| TO result-out ##NO_TEXT.
         RETURN.
     ENDTRY.
-    DATA(request) = client->new_request( ).
 
-    request->add_message( VALUE #( role    = client->role_user
-                                   content = `What makes the ABAP programming language special?` ) ) ##NO_TEXT.
-
-    DATA(response) = client->chat( request = request ).
+    DATA(response) = client->execute( user_message = `What makes the ABAP programming language special?` ) ##NO_TEXT.
 
     IF response-success = abap_false.
       APPEND |Error: return code { response-error-http_code } message { response-error-error_text }| TO result-out ##NO_TEXT.
@@ -100,7 +103,6 @@ CLASS zcl_llm_tests_main IMPLEMENTATION.
         APPEND |Authorization Error { error->if_message~get_text( ) }| TO result-out ##NO_TEXT.
         RETURN.
     ENDTRY.
-    DATA(request) = client->new_request( ).
 
     DATA: BEGIN OF dog,
             breed         TYPE string,
@@ -119,20 +121,14 @@ CLASS zcl_llm_tests_main IMPLEMENTATION.
         ( fieldname = 'avg_height_cm' description = 'Average shoulder height in cm' )
         ( fieldname = 'size_category' description = 'Size Category' enum_values = VALUE #( ( `small` ) ( `medium` ) ( `large` ) ) ) ) ##NO_TEXT.
 
-    request->add_message(
-        VALUE #(
-            role    = client->role_user
-            content = |Create a list of dog breeds with name, average max age, average shoulder height and categorize them into small, medium and large.|
-            && | Return at least 10 breeds.| ) ) ##NO_TEXT.
-
-    request->set_structured_output( data_desc    = CAST #( cl_abap_datadescr=>describe_by_data( so ) )
-                                    descriptions = descriptions ).
-
+    client->set_structured_output( data_desc    = CAST #( cl_abap_datadescr=>describe_by_data( so ) )
+                                   descriptions = descriptions ).
     " A low temperature often helps with structured output
-    request->options( )->set_temperature( '0.1' ).
+    client->options( )->set_temperature( '0.1' ).
 
-    DATA(response) = client->chat( request = request ).
-
+    DATA(response) = client->execute(
+        user_message = |Create a list of dog breeds with name, average max age, average shoulder height and categorize them into small, medium and large.|
+                     && | Return at least 10 breeds.| ) ##NO_TEXT.
     IF response-success = abap_false.
       APPEND |Error: return code { response-error-http_code } message { response-error-error_text }| TO result-out ##NO_TEXT.
       RETURN.
@@ -160,7 +156,6 @@ CLASS zcl_llm_tests_main IMPLEMENTATION.
         APPEND |Authorization Error { error->if_message~get_text( ) }| TO result-out ##NO_TEXT.
         RETURN.
     ENDTRY.
-    DATA(request) = client->new_request( ).
 
     DATA: BEGIN OF dog_alt,
             breed         TYPE string,
@@ -183,18 +178,15 @@ CLASS zcl_llm_tests_main IMPLEMENTATION.
                             ( fieldname = 'alternatives-disadvantages' description = 'Disadvantages of this breed' )
                             ( fieldname = 'alternatives-decision' description = 'Why this is was not your main choice' ) ) ##NO_TEXT.
 
-    request->add_message(
-        VALUE #(
-            role    = client->role_user
-            content = |Recommend a family friendly dog breed medium or large size and overall friendly but sportive character.|
-            && | Also list alternative breends to consider with advantages, disadvantages and why you didn't choose this one.| ) ) ##NO_TEXT.
-    request->set_structured_output( data_desc    = CAST #( cl_abap_datadescr=>describe_by_data( dog ) )
-                                    descriptions = descriptions ).
+    client->set_structured_output( data_desc    = CAST #( cl_abap_datadescr=>describe_by_data( dog ) )
+                                   descriptions = descriptions ).
 
     " A low temperature often helps with structured output
-    request->options( )->set_temperature( '0.1' ).
+    client->options( )->set_temperature( '0.1' ).
 
-    DATA(response) = client->chat( request = request ).
+    DATA(response) = client->execute(
+        user_message = |Recommend a family friendly dog breed medium or large size and overall friendly but sportive character.|
+                    && | Also list alternative breends to consider with advantages, disadvantages and why you didn't choose this one.| ) ##NO_TEXT.
 
     IF response-success = abap_false.
       APPEND |Error: return code { response-error-http_code } message { response-error-error_text }| TO result-out ##NO_TEXT.
@@ -225,15 +217,11 @@ CLASS zcl_llm_tests_main IMPLEMENTATION.
         APPEND |Authorization Error { error->if_message~get_text( ) }| TO result-out ##NO_TEXT.
         RETURN.
     ENDTRY.
-    DATA(request) = client->new_request( ).
 
-    request->add_message(
-        VALUE #(
-            role    = client->role_user
-            content = |Write a short technical concept on how to develop a class to convert from snake case to camel case. |
-            && |Do not write any code. Just outline main characteristics and points to consider. | ) ) ##NO_TEXT.
+    DATA(response) = client->execute(
+        user_message = |Write a short technical concept on how to develop a class to convert from snake case to camel case. |
+                    && |Do not write any code. Just outline main characteristics and points to consider. | ) ##NO_TEXT.
 
-    DATA(response) = client->chat( request = request ).
     IF response-success = abap_false.
       APPEND |Error: return code { response-error-http_code } message { response-error-error_text }| TO result-out ##NO_TEXT.
       RETURN.
@@ -249,21 +237,12 @@ CLASS zcl_llm_tests_main IMPLEMENTATION.
         APPEND |Authorization Error { error->if_message~get_text( ) }| TO result-out ##NO_TEXT.
         RETURN.
     ENDTRY.
-    DATA(qwen_request) = o1_clnt->new_request( ).
 
-    " Add all messages from the last request
-    qwen_request->add_messages( request->get_messages( ) ).
-
-    " Add the choice from the last result-out
-    qwen_request->add_choice( response-choice ).
+    o1_clnt->add_messages( client->get_messages( ) ).
 
     " Add a single message
-    qwen_request->add_message(
-        VALUE #(
-            role    = client->role_user
-            content = |Now implement this in ABAP considering abap clean code principles. Avoid variable prefixes like lv_ and iv_.| ) ) ##NO_TEXT.
-
-    response = o1_clnt->chat( qwen_request ).
+    response = o1_clnt->execute(
+        user_message = |Now implement this in ABAP considering abap clean code principles. Avoid variable prefixes like lv_ and iv_.| ) ##NO_TEXT.
     IF response-success = abap_false.
       APPEND |Error: return code { response-error-http_code } message { response-error-error_text }| TO result-out ##NO_TEXT.
       RETURN.
@@ -281,13 +260,9 @@ CLASS zcl_llm_tests_main IMPLEMENTATION.
         APPEND |Authorization Error { error->if_message~get_text( ) }| TO result-out ##NO_TEXT.
         RETURN.
     ENDTRY.
-    DATA(request) = client->new_request( ).
-
-    request->add_message( VALUE #( role    = client->role_user
-                                   content = `How is the weather in Stuttgart?` ) ) ##NO_TEXT.
 
     " Low temperature is also recommended for tool calls
-    request->options( )->set_temperature( '0.1' ).
+    client->options( )->set_temperature( '0.1' ).
 
     DATA: BEGIN OF tool_data,
             city TYPE string,
@@ -303,9 +278,9 @@ CLASS zcl_llm_tests_main IMPLEMENTATION.
 
     DATA(echo_tool) = NEW zcl_llm_tool_echo( tool_details = tool_details ).
 
-    request->add_tool( echo_tool ).
+    client->add_tool( echo_tool ).
 
-    DATA(response) = client->chat( request = request ).
+    DATA(response) = client->execute( user_message = `How is the weather in Stuttgart?` ) ##NO_TEXT.
 
     IF response-success = abap_false.
       IF response-error-tool_parse_error = abap_true.
@@ -328,9 +303,6 @@ CLASS zcl_llm_tests_main IMPLEMENTATION.
     tool_data = <tool_data>.
     APPEND |Tool call for { <tool>-function-name } with City { tool_data-city }| TO result-out ##NO_TEXT.
 
-    " Append the tool call to the llm messages
-    request->add_tool_choices( VALUE #( ( <tool> ) ) ).
-
     " Simulate a tool result-out. Usually this would be done by the tool internally.
     DATA: BEGIN OF forecast_entry,
             day          TYPE string,
@@ -351,12 +323,12 @@ CLASS zcl_llm_tests_main IMPLEMENTATION.
                         tool_call_id = <tool>-id ).
 
     " Append the tool result-out and call the LLM again to get the response
-    request->add_tool_result( echo_tool ).
+    client->add_tool_result( echo_tool ).
     " Disable tool usage
-    request->set_tool_choice( zif_llm_chat_request=>tool_choice_none ).
+    client->set_tool_choice( zif_llm_chat_request=>tool_choice_none ).
 
     " Execute and evaluate next call
-    response = client->chat( request ).
+    response = client->execute( ).
 
     IF response-success = abap_false.
       IF response-error-tool_parse_error = abap_true.
@@ -378,19 +350,46 @@ CLASS zcl_llm_tests_main IMPLEMENTATION.
         APPEND |Authorization Error { error->if_message~get_text( ) }| TO result-out ##NO_TEXT.
         RETURN.
     ENDTRY.
-    DATA(request) = client->new_request( ).
-    request->add_message( VALUE #( role    = client->role_system
-                                   content = `You are a story telling pirate.` ) ) ##NO_TEXT.
-    request->add_message( VALUE #( role    = client->role_user
-                                   content = `I see land!` ) ) ##NO_TEXT.
-
-    DATA(response) = client->chat( request = request ).
+    client->set_system_message( `You are a story telling pirate.` ) ##NO_TEXT.
+    DATA(response) = client->execute( user_message = `I see land!` ) ##NO_TEXT.
 
     IF response-success = abap_false.
       APPEND |Error: return code { response-error-http_code } message { response-error-error_text }| TO result-out ##NO_TEXT.
       RETURN.
     ENDIF.
     APPEND |System call result-out with { response-usage-prompt_tokens } input tokens and { response-usage-completion_tokens } output tokens.| TO result-out ##NO_TEXT.
+    APPEND response-choice-message-content TO result-out.
+    result-success = abap_true.
+  ENDMETHOD.
+
+  METHOD execute_tool.
+    TRY.
+        DATA(client) = zcl_llm_factory=>get_client( model ).
+      CATCH zcx_llm_authorization INTO DATA(error).
+        APPEND |Authorization Error { error->if_message~get_text( ) }| TO result-out ##NO_TEXT.
+        RETURN.
+    ENDTRY.
+    client->add_tool( NEW zcl_llm_tool_calculator( ) ).
+    DATA(response) = client->execute( user_message = `What is 555646x665565 ?`
+                                      temperature  = '0.1' ).
+    IF response-success = abap_false.
+      APPEND |Error: return code { response-error-http_code } message { response-error-error_text }| TO result-out ##NO_TEXT.
+      RETURN.
+    ENDIF.
+    APPEND |Calculator tool call result-out with { response-usage-prompt_tokens } input tokens and { response-usage-completion_tokens } output tokens.| TO result-out ##NO_TEXT.
+
+    " Execute the calculator tool
+    IF lines( response-choice-tool_calls ) <> 1.
+      APPEND |Error: Wrong number of tool calls { lines( response-choice-tool_calls ) }for the caluclator tool| TO result-out ##NO_TEXT.
+      RETURN.
+    ENDIF.
+    client->execute_tools( ).
+    response = client->execute( ).
+    IF response-success = abap_false.
+      APPEND |Error: return code { response-error-http_code } message { response-error-error_text }| TO result-out ##NO_TEXT.
+      RETURN.
+    ENDIF.
+    APPEND |Calculator result-out with { response-usage-prompt_tokens } input tokens and { response-usage-completion_tokens } output tokens.| TO result-out ##NO_TEXT.
     APPEND response-choice-message-content TO result-out.
     result-success = abap_true.
   ENDMETHOD.

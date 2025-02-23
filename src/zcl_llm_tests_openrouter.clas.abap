@@ -14,7 +14,6 @@ ENDCLASS.
 
 
 CLASS zcl_llm_tests_openrouter IMPLEMENTATION.
-
   METHOD if_oo_adt_classrun~main.
     DATA(response) = zcl_llm_tests_main=>simple_call( 'gemini-flash-1.5' ).
     IF response-success = abap_false.
@@ -44,7 +43,8 @@ CLASS zcl_llm_tests_openrouter IMPLEMENTATION.
     ENDIF.
     out->write( response-out ).
 
-    response = zcl_llm_tests_main=>multi_call( model_plan = 'gemini-flash-1.5' model_code = 'claude-3.5-haiku' ).
+    response = zcl_llm_tests_main=>multi_call( model_plan = 'gemini-flash-1.5'
+                                               model_code = 'claude-3.5-haiku' ).
     IF response-success = abap_false.
       out->write( response-out ).
       RETURN.
@@ -58,6 +58,12 @@ CLASS zcl_llm_tests_openrouter IMPLEMENTATION.
     ENDIF.
     out->write( response-out ).
 
+    response = zcl_llm_tests_main=>execute_tool( 'qwen/qwen-2.5-72b' ).
+    IF response-success = abap_false.
+      out->write( response-out ).
+      RETURN.
+    ENDIF.
+    out->write( response-out ).
   ENDMETHOD.
 
 ENDCLASS.
